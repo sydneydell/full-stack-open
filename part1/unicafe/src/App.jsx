@@ -22,7 +22,7 @@ const App = () => {
   }
 
   const handleBadClick = () => {
-    setBad(good + 1)
+    setBad(bad + 1)
   }
 
   return (
