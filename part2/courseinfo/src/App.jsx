@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 const Header = ({ course }) => <h1>{course}</h1>
 
-const Total = ({ sum }) => <p>Number of exercises {sum}</p>
+const Total = ({ sum }) => <p> <b>total of {sum} exercises</b> </p>
 
 const Part = ({ part }) => 
   <p>
@@ -10,23 +10,28 @@ const Part = ({ part }) =>
 
 const Content = ({ parts }) => 
   <>
-    <Part
-      part={parts[0]} 
-    />
-    <Part
-      part={parts[1]} 
-    />
-    <Part
-      part={parts[2]} 
-    />      
+    {parts.map((part) => (
+      <Part key={part.id} part={part} />
+    ))}      
   </>
 
 
 const Course = ({ course }) => {
+  
+  const findSum = () => {
+    var sum = 0;
+    course.parts.map((part) => {
+      sum += part.exercises;
+    })
+
+    return sum;
+  }
+
   return (
     <div>
       <Header course={course.name}/>
       <Content parts={course.parts}/>
+      <Total sum ={findSum()}/>
     </div>
   )
 }
