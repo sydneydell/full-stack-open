@@ -1,25 +1,13 @@
 import ReactDOM from 'react-dom/client'
-
 import App from './App'
 
-const notes = [
-  {
-    id: 1,
-    content: 'HTML is easy',
-    important: true
-  },
-  {
-    id: 2,
-    content: 'Browser can execute only JavaScript',
-    important: false
-  },
-  {
-    id: 3,
-    content: 'GET and POST are the most important methods of HTTP protocol',
-    important: true
-  }
-]
+// since we're retrieving the notes from the server, there's no need to pass data as props to the App component
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-  <App notes={notes} />
-)
+// get method returns a promise
+// must use promise.then to access the result of a promise
+
+// axios.get('http://localhost:3001/notes').then(response => {
+//   const notes = response.data
+//   ReactDOM.createRoot(document.getElementById('root')).render(<App notes={notes} />)
+// })

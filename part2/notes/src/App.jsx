@@ -1,12 +1,29 @@
 /* eslint-disable react/prop-types */
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import axios from 'axios'
 import Note from './components/Note'
 
 
-const App = (props) => {
-  const [notes, setNotes] = useState(props.notes)
+const App = () => {
+  const [notes, setNotes] = useState([])
   const [newNote, setNewNote] = useState('') 
   const [showAll, setShowAll] = useState(true)
+
+  // By default, effects run after every completed render, but you can choose to fire it only when certain values have changed.
+  const hook = () => {
+    console.log('effect')
+    axios
+      .get('http://localhost:3001/notes')
+      .then(response => {
+        console.log('promise fulfilled')
+        setNotes(response.data)
+      })
+  }
+  
+  // the first parameter is the effect function itself
+  // the second parameter is used to speciy how often the effect is run 
+  // if the second parameter is an empty array, the effect is only run along with the first render of the component
+  useEffect(hook, [])
 
   const addNote = (event) => {
     event.preventDefault()
