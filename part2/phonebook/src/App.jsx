@@ -25,11 +25,12 @@ const PersonForm = ({ addPerson, newName, handleNameChange, newNumber, handleNum
 );
 
 // Component to display the list of persons in the phonebook
-const Persons = ({ personsToShow }) => (
+const Persons = ({ personsToShow, deletePerson }) => (
   <ul>
     {personsToShow.map(person => (
       <li key={person.id}>
         {person.name} {person.number}
+        <button onClick={() => deletePerson(person.id)}>delete</button>
       </li>
     ))}
   </ul>
@@ -72,6 +73,21 @@ const App = () => {
     }
   }
 
+  const deletePerson = id => {
+    const person = persons.find(n => n.id === id)
+    if (window.confirm(`Delete ${person.name}?`)) {
+      const changedPerson = { ...person}
+      personService
+        .remove(changedPerson.id)
+        .then(() => {
+          setPersons(persons.filter(person => person.id !== id));  // Remove person from state
+        })
+        .catch(error => {
+          console.error('Failed to delete person:', error);
+        })
+    }
+  }
+
   const handleNameChange = (event) => {
     setNewName(event.target.value)
   }
@@ -104,7 +120,7 @@ const App = () => {
       />
 
       <h2>Numbers</h2>
-      <Persons personsToShow={personsToShow} />
+      <Persons personsToShow={personsToShow} deletePerson={deletePerson} />
     </div>
   )
 }
