@@ -1,15 +1,15 @@
 /* eslint-disable react/prop-types */
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import personService from './services/persons'
 
-// Component for filtering persons
+// Component for filtering out phonebook entries by name
 const Filter = ({ newSearch, handleSearch }) => (
   <div>
     filter shown with <input value={newSearch} onChange={handleSearch} />
   </div>
 );
 
-// Component for the form to add a new person
+// Component for the form to add a new person and number
 const PersonForm = ({ addPerson, newName, handleNameChange, newNumber, handleNumberChange }) => (
   <form onSubmit={addPerson}>
     <div>
@@ -24,7 +24,7 @@ const PersonForm = ({ addPerson, newName, handleNameChange, newNumber, handleNum
   </form>
 );
 
-// Component to display the list of persons
+// Component to display the list of persons in the phonebook
 const Persons = ({ personsToShow }) => (
   <ul>
     {personsToShow.map(person => (
@@ -42,13 +42,10 @@ const App = () => {
   const [newSearch, setNewSearch] = useState('')
 
   useEffect(() => {
-    axios
-      .get('http://localhost:3001/persons')
-      .then(response => {
-        setPersons(response.data)
-      })
-      .catch(error => {
-        console.error('Error fetching data:', error);
+    personService
+      .getAll()
+      .then(initialNames => {
+        setPersons(initialNames)
       })
   }, [])
 
@@ -62,13 +59,17 @@ const App = () => {
     } else {
       const nameObject = {
         name: newName,
-        number: newNumber,
-        id: persons.length + 1
+        number: newNumber
       }
-      setPersons(persons.concat(nameObject))
+
+      personService
+        .create(nameObject)
+        .then(returnedName => {
+          setPersons(persons.concat(returnedName))
+          setNewName('')
+          setNewNumber('')
+      })
     }
-    setNewName('')
-    setNewNumber('')
   }
 
   const handleNameChange = (event) => {
