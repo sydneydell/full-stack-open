@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable react/prop-types */
 import { useState, useEffect } from 'react'
 import personService from './services/persons'
@@ -37,108 +38,113 @@ const Persons = ({ personsToShow, deletePerson }) => (
 );
 
 // Component to display a notification when a person is added
-const Notification = ({ message }) => {
+const Notification = ({ message, type }) => {
   if (message === null) {
-    return null
+    return null;
   }
 
   return (
-    <div className='success'>
+    <div className={type === 'error' ? 'error' : 'success'}>
       {message}
     </div>
-  )
-}
+  );
+};
 
 const App = () => {
-  const [persons, setPersons] = useState([])
-  const [newName, setNewName] = useState('')
-  const [newNumber, setNewNumber] = useState('')
-  const [newSearch, setNewSearch] = useState('')
-  const [notification, setNotification] = useState('')
+  const [persons, setPersons] = useState([]);
+  const [newName, setNewName] = useState('');
+  const [newNumber, setNewNumber] = useState('');
+  const [newSearch, setNewSearch] = useState('');
+  const [notification, setNotification] = useState({ message: null, type: null });
 
   useEffect(() => {
     personService
       .getAll()
       .then(initialNames => {
-        setPersons(initialNames)
-      })
-  }, [])
+        setPersons(initialNames);
+      });
+  }, []);
 
   const addPerson = (event) => {
-    event.preventDefault()
+    event.preventDefault();
 
     const nameObject = {
       name: newName,
-      number: newNumber
-    }
-    
-    const personExists = persons.find(person => person.name === newName)
+      number: newNumber,
+    };
+
+    const personExists = persons.find(person => person.name === newName);
 
     if (personExists) {
-      // change the number associated with a name if the name is already in the phonebook
       if (window.confirm(`${nameObject.name} is already added to the phonebook, replace the old number with a new one?`)) {
         personService
-          .update(personExists.id, nameObject) 
+          .update(personExists.id, nameObject)
           .then(updatedPerson => {
             setPersons(persons.map(person => 
-              person.id !== personExists.id ? person : updatedPerson  // Replace the old person object
-            ))
-            setNewName('')
-            setNewNumber('')
-            setNotification(
-              `Updated ${nameObject.name}'s phone number`
-            )
+              person.id !== personExists.id ? person : updatedPerson
+            ));
+            setNewName('');
+            setNewNumber('');
+            setNotification({ message: `Updated ${nameObject.name}'s phone number`, type: 'success' });
             setTimeout(() => {
-              setNotification(null) // Reset notification banner after 5 seconds
-            }, 5000)
+              setNotification({ message: null, type: null });
+            }, 5000);
           })
+          .catch(error => {
+            setNotification({ message: `Information of ${nameObject.name} has already been removed from server`, type: 'error' });
+            setTimeout(() => {
+              setNotification({ message: null, type: null });
+            }, 5000);
+          });
       }
     } else {
-      // add a new person and their number to the phonebook
       personService
         .create(nameObject)
         .then(returnedName => {
-          setPersons(persons.concat(returnedName))
-          setNewName('')
-          setNewNumber('')
-          setNotification(
-            `Added ${nameObject.name}`
-          )
+          setPersons(persons.concat(returnedName));
+          setNewName('');
+          setNewNumber('');
+          setNotification({ message: `Added ${nameObject.name}`, type: 'success' });
           setTimeout(() => {
-            setNotification(null)
-          }, 5000)
-      })
+            setNotification({ message: null, type: null });
+          }, 5000);
+        });
     }
-  }
+  };
 
   const deletePerson = id => {
-    const person = persons.find(n => n.id === id)
+    const person = persons.find(n => n.id === id);
     if (window.confirm(`Delete ${person.name}?`)) {
-      const changedPerson = { ...person}
       personService
-        .remove(changedPerson.id)
+        .remove(id)
         .then(() => {
-          setPersons(persons.filter(person => person.id !== id));  // Remove person from state
+          setPersons(persons.filter(person => person.id !== id));
+          setNotification({ message: `Deleted ${person.name}`, type: 'success' });
+          setTimeout(() => {
+            setNotification({ message: null, type: null });
+          }, 5000);
         })
         .catch(error => {
-          console.error('Failed to delete person:', error);
-        })
+          setNotification({ message: `Failed to delete ${person.name}`, type: 'error' });
+          setTimeout(() => {
+            setNotification({ message: null, type: null });
+          }, 5000);
+        });
     }
-  }
+  };
 
   const handleNameChange = (event) => {
-    setNewName(event.target.value)
-  }
+    setNewName(event.target.value);
+  };
 
   const handleNumberChange = (event) => {
-    setNewNumber(event.target.value)
-  }
+    setNewNumber(event.target.value);
+  };
 
   const handleSearch = (event) => {
-    setNewSearch(event.target.value)
-  }
+    setNewSearch(event.target.value);
+  };
 
-  // Filter persons based on the search input
   const personsToShow = persons.filter(person =>
     person.name.toLowerCase().includes(newSearch.toLowerCase())
   );
@@ -146,8 +152,8 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
-      <Notification message={notification} />
-      <Filter newSearch={newSearch} handleSearch={handleSearch}/>
+      <Notification message={notification.message} type={notification.type} />
+      <Filter newSearch={newSearch} handleSearch={handleSearch} />
 
       <h2>Add a new</h2>
       <PersonForm 
@@ -161,7 +167,7 @@ const App = () => {
       <h2>Numbers</h2>
       <Persons personsToShow={personsToShow} deletePerson={deletePerson} />
     </div>
-  )
-}
+  );
+};
 
-export default App
+export default App;
