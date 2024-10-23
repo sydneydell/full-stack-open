@@ -1,5 +1,6 @@
 import ReactDOM from 'react-dom/client'
 import App from './App'
+import './index.css'
 
 // since we're retrieving the notes from the server, there's no need to pass data as props to the App component
 ReactDOM.createRoot(document.getElementById("root")).render(<App />);
