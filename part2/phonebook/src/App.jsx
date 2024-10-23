@@ -36,11 +36,25 @@ const Persons = ({ personsToShow, deletePerson }) => (
   </ul>
 );
 
+// Component to display a notification when a person is added
+const Notification = ({ message }) => {
+  if (message === null) {
+    return null
+  }
+
+  return (
+    <div className='success'>
+      {message}
+    </div>
+  )
+}
+
 const App = () => {
   const [persons, setPersons] = useState([])
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [newSearch, setNewSearch] = useState('')
+  const [notification, setNotification] = useState('')
 
   useEffect(() => {
     personService
@@ -52,23 +66,47 @@ const App = () => {
 
   const addPerson = (event) => {
     event.preventDefault()
+
+    const nameObject = {
+      name: newName,
+      number: newNumber
+    }
     
-    const personExists = persons.some(person => person.name === newName)
+    const personExists = persons.find(person => person.name === newName)
 
     if (personExists) {
-      alert(`${newName} is already in the phonebook`)
-    } else {
-      const nameObject = {
-        name: newName,
-        number: newNumber
+      // change the number associated with a name if the name is already in the phonebook
+      if (window.confirm(`${nameObject.name} is already added to the phonebook, replace the old number with a new one?`)) {
+        personService
+          .update(personExists.id, nameObject) 
+          .then(updatedPerson => {
+            setPersons(persons.map(person => 
+              person.id !== personExists.id ? person : updatedPerson  // Replace the old person object
+            ))
+            setNewName('')
+            setNewNumber('')
+            setNotification(
+              `Updated ${nameObject.name}'s phone number`
+            )
+            setTimeout(() => {
+              setNotification(null) // Reset notification banner after 5 seconds
+            }, 5000)
+          })
       }
-
+    } else {
+      // add a new person and their number to the phonebook
       personService
         .create(nameObject)
         .then(returnedName => {
           setPersons(persons.concat(returnedName))
           setNewName('')
           setNewNumber('')
+          setNotification(
+            `Added ${nameObject.name}`
+          )
+          setTimeout(() => {
+            setNotification(null)
+          }, 5000)
       })
     }
   }
@@ -108,6 +146,7 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={notification} />
       <Filter newSearch={newSearch} handleSearch={handleSearch}/>
 
       <h2>Add a new</h2>
