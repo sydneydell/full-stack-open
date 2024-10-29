@@ -27,7 +27,7 @@ const CountryInfo = ({ country }) => (
   </div>
 )
 
-const Display = ({ query, filteredCountries }) => {
+const Display = ({ query, filteredCountries, handleShow }) => {
   if (filteredCountries.length > 0) {
     if (filteredCountries.length > 10) {
       return <p>Too many matches, specify another filter</p>
@@ -39,6 +39,7 @@ const Display = ({ query, filteredCountries }) => {
           {filteredCountries.map(country => (
             <div key={country.cca3}>
               {country.name.common}
+              <button onClick={() => handleShow(country)}>Show</button>
             </div>
           ))}
         </div>
@@ -55,6 +56,7 @@ const App = () => {
   const [query, setQuery] = useState('');
   const [countries, setCountries] = useState([]);
   const [filteredCountries, setFilteredCountries] = useState([]);
+  const [selectedCountry, setSelectedCountry] = useState(null);
 
   // Fetch all countries only once when the component mounts
   useEffect(() => {
@@ -75,17 +77,25 @@ const App = () => {
     } else {
       setFilteredCountries([]); // Clear list if query is empty
     }
+    setSelectedCountry(null);
   }, [query, countries]);
 
   const handleQuery = (event) => {
     setQuery(event.target.value);
   };
 
+  const handleShow = (country) => {
+    setSelectedCountry(country);
+  };
+
   return (
     <div>
       <Filter query={query} handleQuery={handleQuery} />
-      <Display query={query} filteredCountries={filteredCountries} />
-    </div>
+      {selectedCountry ? (
+        <CountryInfo country={selectedCountry} />
+      ) : (
+        <Display query={query} filteredCountries={filteredCountries} handleShow={handleShow} />
+      )}    </div>
   );
 };
 
