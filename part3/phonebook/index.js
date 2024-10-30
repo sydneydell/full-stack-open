@@ -1,7 +1,14 @@
 const express = require('express')
+const morgan = require('morgan')
 const app = express()
 
 app.use(express.json())
+
+// Custom morgan token for logging request body
+morgan.token('body', (req) => JSON.stringify(req.body))
+
+// Use morgan with custom format to include method, URL, status, and body if it exists
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
 // Hardcoded list of phonebook entries
 let persons = [
@@ -32,13 +39,6 @@ app.get('/', (request, response) => {
     response.send('<h1>Phonebook API</h1>')
 })
 
-// Show that the port is running correctly
-const PORT = 3001;
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`)
-})
-
-  
 // Display a hardcoded list of phonebook entries
 app.get('/api/persons', (request, response) => {
     response.json(persons)
@@ -103,4 +103,17 @@ app.post('/api/persons', (request, response) => {
 
     persons = persons.concat(newPerson)
     response.json(newPerson)
+})
+
+// Handle unknown endpoints
+const unknownEndpoint = (request, response) => {
+    response.status(404).send({ error: 'unknown endpoint' })
+}
+  
+app.use(unknownEndpoint)
+
+// Show that the port is running correctly
+const PORT = 3001;
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`)
 })
