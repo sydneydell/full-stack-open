@@ -1,6 +1,8 @@
 const express = require('express')
 const app = express()
 
+app.use(express.json())
+
 // Hardcoded list of phonebook entries
 let persons = [
     { 
@@ -65,3 +67,34 @@ app.get('/api/persons/:id', (request, response) => {
     }
 })
   
+// Delete a single phonebook entry
+app.delete('/api/persons/:id', (request, response) => {
+    const id = request.params.id
+    persons = persons.filter(person => person.id !== id)
+    
+    response.status(204).end()
+})
+
+// Add new phonebook entries by making HTTP POST request
+const generateId = () => {
+    return Math.floor(Math.random() * 10000)
+}
+
+app.post('/api/persons', (request, response) => {
+    const body = request.body
+
+    if (!body.name) {
+        return response.status(400).json({error: 'Name Missing'})
+    } else if (!body.number) {
+        return response.status(400).json({error: 'Number Missing'})
+    }
+
+    const newPerson = {
+        name: body.name,
+        number: body.number,
+        id: generateId()
+    }
+
+    persons = persons.concat(newPerson)
+    response.json(newPerson)
+})
