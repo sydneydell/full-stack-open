@@ -80,6 +80,10 @@ const generateId = () => {
     return Math.floor(Math.random() * 10000)
 }
 
+const nameExists = (name) => {
+    return persons.some(person => person.name === name)
+}
+
 app.post('/api/persons', (request, response) => {
     const body = request.body
 
@@ -87,6 +91,8 @@ app.post('/api/persons', (request, response) => {
         return response.status(400).json({error: 'Name Missing'})
     } else if (!body.number) {
         return response.status(400).json({error: 'Number Missing'})
+    } else if (nameExists(body.name)) {
+        return response.status(400).json({error: 'Name must be unique'})
     }
 
     const newPerson = {
