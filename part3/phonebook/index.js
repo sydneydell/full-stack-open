@@ -1,13 +1,13 @@
 const express = require('express')
 const morgan = require('morgan')
+const cors = require('cors')
 const app = express()
 
 app.use(express.json())
+app.use(cors())
 
 // Custom morgan token for logging request body
 morgan.token('body', (req) => JSON.stringify(req.body))
-
-// Use morgan with custom format to include method, URL, status, and body if it exists
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
 // Hardcoded list of phonebook entries
@@ -57,7 +57,7 @@ app.get('/info', (request, response) => {
 
 // Display the information for a single phonebook entry
 app.get('/api/persons/:id', (request, response) => {
-    const id = request.params.id
+    const id = Number(request.params.id)
     const person = persons.find(person => person.id === id)
     
     if (person) {
@@ -69,7 +69,7 @@ app.get('/api/persons/:id', (request, response) => {
   
 // Delete a single phonebook entry
 app.delete('/api/persons/:id', (request, response) => {
-    const id = request.params.id
+    const id = Number(request.params.id)
     persons = persons.filter(person => person.id !== id)
     
     response.status(204).end()
