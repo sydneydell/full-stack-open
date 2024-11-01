@@ -1,7 +1,5 @@
 import axios from 'axios'
-
-const PORT = 3001
-const baseUrl = `http://localhost:${PORT}/api/persons`
+const baseUrl = `/api/persons`
 
 const getAll = () => {
   const request = axios.get(baseUrl)
