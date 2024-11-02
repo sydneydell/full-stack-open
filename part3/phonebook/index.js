@@ -2,6 +2,7 @@ const express = require('express')
 const morgan = require('morgan')
 const cors = require('cors')
 const app = express()
+const mongoose = require('mongoose')
 
 app.use(express.json())
 app.use(cors())
@@ -35,6 +36,19 @@ let persons = [
     }
 ]
 
+// Mongoose definitions to connect backend to MongoDB database
+const url = process.env.MONGODB_URI
+
+mongoose.set('strictQuery',false)
+mongoose.connect(url)
+
+const personSchema = new mongoose.Schema({
+  name: String,
+  number: String,
+})
+
+const Person = mongoose.model('Person', personSchema)
+
 // Title of the API
 app.get('/', (request, response) => {
     response.send('<h1>Phonebook API</h1>')
@@ -42,7 +56,9 @@ app.get('/', (request, response) => {
 
 // Display a hardcoded list of phonebook entries
 app.get('/api/persons', (request, response) => {
-    response.json(persons)
+    Person.find({}).then(persons => {
+        response.json(persons)
+      })
 })
 
 // Show the number of entries in the phonebook and the time the request was made
