@@ -2,52 +2,17 @@ const express = require('express')
 const morgan = require('morgan')
 const cors = require('cors')
 const app = express()
-const mongoose = require('mongoose')
+require('dotenv').config()
 
+const Person = require('./models/person')
+
+app.use(express.static('dist'))
 app.use(express.json())
 app.use(cors())
-app.use(express.static('dist'))
 
 // Custom morgan token for logging request body
 morgan.token('body', (req) => JSON.stringify(req.body))
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
-
-// Hardcoded list of phonebook entries
-let persons = [
-    { 
-      "id": "1",
-      "name": "Arto Hellas", 
-      "number": "040-123456"
-    },
-    { 
-      "id": "2",
-      "name": "Ada Lovelace", 
-      "number": "39-44-5323523"
-    },
-    { 
-      "id": "3",
-      "name": "Dan Abramov", 
-      "number": "12-43-234345"
-    },
-    { 
-      "id": "4",
-      "name": "Mary Poppendieck", 
-      "number": "39-23-6423122"
-    }
-]
-
-// Mongoose definitions to connect backend to MongoDB database
-const url = process.env.MONGODB_URI
-
-mongoose.set('strictQuery',false)
-mongoose.connect(url)
-
-const personSchema = new mongoose.Schema({
-  name: String,
-  number: String,
-})
-
-const Person = mongoose.model('Person', personSchema)
 
 // Title of the API
 app.get('/', (request, response) => {
@@ -63,63 +28,99 @@ app.get('/api/persons', (request, response) => {
 
 // Show the number of entries in the phonebook and the time the request was made
 app.get('/info', (request, response) => {
-    const numPersons = persons.length
-    const currentTime = new Date()
-
-    response.send(`
-        <p>Phonebook has info for ${numPersons} people</p>
-        <p>${currentTime}</p>
-    `)
+    Person.countDocuments({})
+        .then(numPersons => {
+            const currentTime = new Date()
+            response.send(`
+                <p>Phonebook has info for ${numPersons} people</p>
+                <p>${currentTime}</p>
+            `)
+            })
+        .catch(error => {
+            response.status(500).send({ error: 'Failed to fetch the number of entries' })
+        })
 })
 
 // Display the information for a single phonebook entry
-app.get('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    const person = persons.find(person => person.id === id)
-    
-    if (person) {
-        response.json(person)
-    } else {
-        response.status(404).end()
-    }
+app.get('/api/persons/:id', (request, response, next) => {
+    Person.findById(request.params.id)
+        .then(person => {
+            if(person) {
+                response.json(person)
+            } else {
+                response.status(404).end()
+            }
+        })
+        .catch(error => next(error))
 })
   
 // Delete a single phonebook entry
-app.delete('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    persons = persons.filter(person => person.id !== id)
-    
-    response.status(204).end()
+app.delete('/api/persons/:id', (request, response, next) => {
+    Person.findByIdAndDelete(request.params.id)
+      .then(result => {
+        response.status(204).end()
+      })
+      .catch(error => next(error))
 })
 
-// Add new phonebook entries by making HTTP POST request
-const generateId = () => {
-    return Math.floor(Math.random() * 10000)
-}
+// const nameExists = (name) => {
+//     return persons.some(person => person.name === name)
+// }
 
-const nameExists = (name) => {
-    return persons.some(person => person.name === name)
-}
-
-app.post('/api/persons', (request, response) => {
+// Update an existing phonebook entry by making HTTP PUT request
+app.put('/app/persons/:id', (request, response, next) => {
     const body = request.body
 
     if (!body.name) {
         return response.status(400).json({error: 'Name Missing'})
     } else if (!body.number) {
         return response.status(400).json({error: 'Number Missing'})
-    } else if (nameExists(body.name)) {
-        return response.status(400).json({error: 'Name must be unique'})
-    }
+    } 
 
-    const newPerson = {
+    const updatedPerson = new Person({
         name: body.name,
-        number: body.number,
-        id: generateId()
-    }
+        number: body.number
+    })
 
-    persons = persons.concat(newPerson)
-    response.json(newPerson)
+    Person.findByIdAndUpdate(request.params.id, updatedPerson, { new: true })
+        .then(updatedPerson => {
+            response.json(updatedPerson)
+        })
+        .catch(error => next(error))
+})
+
+// Add new phonebook entries by making HTTP POST request
+app.post('/api/persons', (request, response, next) => {
+    const {name, number} = request.body
+
+    if (!name) {
+        return response.status(400).json({error: 'Name Missing'})
+    } else if (!number) {
+        return response.status(400).json({error: 'Number Missing'})
+    } 
+
+
+    Person.findOne({ name })
+        .then(existingPerson => {
+            if (existingPerson) {
+                // Update the number if the name exists
+                existingPerson.number = number
+                existingPerson.save()
+                    .then(updatedPerson => response.json(updatedPerson))
+                    .catch(error => next(error))
+            } else {
+                const newPerson = new Person({
+                    name: body.name,
+                    number: body.number
+                })
+
+                newPerson.save()
+                .then(savedPerson => {
+                    response.json(savedPerson)
+                })
+                .catch(error => next(error))
+            }
+        })
 })
 
 // Handle unknown endpoints
@@ -127,7 +128,20 @@ const unknownEndpoint = (request, response) => {
     response.status(404).send({ error: 'unknown endpoint' })
 }
   
+// Handler of requests to unknown endpoints
 app.use(unknownEndpoint)
+
+// Middleware error handler
+const errorHandler = (error, request, response, next) => {
+    console.error(error.message)
+    if (error.name === 'CastError') {
+      return response.status(400).send({ error: 'malformatted id' })
+    } 
+    next(error)
+}
+  
+// Handler of requrests with result to errors
+app.use(errorHandler)
 
 // Show that the port is running correctly
 const PORT = process.env.PORT || 3001
