@@ -23,7 +23,7 @@ app.get('/', (request, response) => {
 app.get('/api/persons', (request, response) => {
     Person.find({}).then(persons => {
         response.json(persons)
-      })
+    })
 })
 
 // Show the number of entries in the phonebook and the time the request was made
@@ -63,26 +63,26 @@ app.delete('/api/persons/:id', (request, response, next) => {
       .catch(error => next(error))
 })
 
-// const nameExists = (name) => {
-//     return persons.some(person => person.name === name)
-// }
-
 // Update an existing phonebook entry by making HTTP PUT request
 app.put('/app/persons/:id', (request, response, next) => {
-    const body = request.body
+    const { name, number } = request.body
 
-    if (!body.name) {
+    if (!name) {
         return response.status(400).json({error: 'Name Missing'})
-    } else if (!body.number) {
+    } else if (!number) {
         return response.status(400).json({error: 'Number Missing'})
     } 
 
-    const updatedPerson = new Person({
-        name: body.name,
-        number: body.number
-    })
+    // const updatedPerson = new Person({
+    //     name: name,
+    //     number: number
+    // })
 
-    Person.findByIdAndUpdate(request.params.id, updatedPerson, { new: true })
+    Person.findByIdAndUpdate(
+        request.params.id, 
+        { name, number }, 
+        { new: true, runValidators: true, context: 'query' }
+    )
         .then(updatedPerson => {
             response.json(updatedPerson)
         })
@@ -99,7 +99,6 @@ app.post('/api/persons', (request, response, next) => {
         return response.status(400).json({error: 'Number Missing'})
     } 
 
-
     Person.findOne({ name })
         .then(existingPerson => {
             if (existingPerson) {
@@ -110,8 +109,8 @@ app.post('/api/persons', (request, response, next) => {
                     .catch(error => next(error))
             } else {
                 const newPerson = new Person({
-                    name: body.name,
-                    number: body.number
+                    name: name,
+                    number: number
                 })
 
                 newPerson.save()
@@ -136,7 +135,9 @@ const errorHandler = (error, request, response, next) => {
     console.error(error.message)
     if (error.name === 'CastError') {
       return response.status(400).send({ error: 'malformatted id' })
-    } 
+    } else if (error.name === 'ValidationError') {
+        return response.status(400).json({ error: error.message })
+    }
     next(error)
 }
   

@@ -3,7 +3,7 @@ Content-Type: application/json
 
 {
     "name": "Arto Hellas",
-    "number": "704-774-7489"
+    "number": "703439435"
 }
 
 ###
@@ -20,4 +20,13 @@ Content-Type: application/json
 
 {
     "number": "704-774-7489"
+}
+
+###
+POST http://localhost:3001/api/persons
+Content-Type: application/json
+
+{
+    "name": "Art",
+    "number": "704348597489"
 }

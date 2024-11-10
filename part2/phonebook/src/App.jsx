@@ -91,9 +91,11 @@ const App = () => {
             }, 5000);
           })
           .catch(error => {
-            setNotification({ message: `Information of ${nameObject.name} has already been removed from server`, type: 'error' });
+            // Handle validation error or other backend errors
+            const errorMessage = error.response?.data?.error || 'Failed to update the entry';
+            setNotification({ message: errorMessage, type: 'error' });
             setTimeout(() => {
-              setNotification({ message: null, type: null });
+                setNotification({ message: null, type: null });
             }, 5000);
           });
       }
