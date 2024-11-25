@@ -46,3 +46,9 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InN5Z
     "url": "https://www.businessinsider.com/guides/kitchen/best-chocolate",
     "userId": "6744cfee2d27df29304de76d"
 }
+
+###
+DELETE http://localhost:3001/api/blogs/6744b437e758473c00c05d3d
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImF1dGhvcml6ZWQyIiwiaWQiOiI2NzQ0ZDA3MTJkMjdkZjI5MzA0ZGU3NmYiLCJpYXQiOjE3MzI1NzM1NTN9.5cQmgLOrmNjXrhIqkU4BFFirhcN0h8cuwTD-ZTvYuPI
+
