@@ -62,6 +62,67 @@ describe('when there is initially one user in db', () => {
     })
 })
 
+describe('invalid user information', () => {
+    test('Raise an error if username is less than 3 characters', async () => {
+        const newUser = {
+            username: 'N',
+            name: 'Star',
+            password: 'Rooster'
+        }
+        
+        const result = await api
+            .post('/api/users')
+            .send(newUser)
+            .expect(400)
+            .expect('Content-Type', /application\/json/)
+
+        assert(result.body.error.includes('Username must be at least 3 characters'))
+    })
+
+    test('Raise an error if password is less than 3 characters', async () => {
+        const newUser = {
+            username: 'Newguy',
+            name: 'Star',
+            password: 'R'
+        }
+        
+        const result = await api
+            .post('/api/users')
+            .send(newUser)
+            .expect(400)
+            .expect('Content-Type', /application\/json/)
+
+        assert(result.body.error.includes('Password must be at least 3 characters'))
+    })
+
+    test('Raise an error if username or password are missing', async () => {
+        const noUsername = {
+            username: '',
+            name: 'Star',
+            password: 'Rooster'
+        }
+        
+        const result1 = await api
+            .post('/api/users')
+            .send(noUsername)
+            .expect(400)
+            .expect('Content-Type', /application\/json/)
+
+        const noPassword = {
+            username: '',
+            name: 'Star',
+            password: 'Rooster'
+        }
+        
+        const result2 = await api
+            .post('/api/users')
+            .send(noPassword)
+            .expect(400)
+            .expect('Content-Type', /application\/json/)
+
+    })
+})
+
 after(async () => {
     await mongoose.connection.close()
 })

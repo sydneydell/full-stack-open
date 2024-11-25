@@ -4,10 +4,14 @@ const userSchema = new mongoose.Schema({
   username: {
     type: String,
     required: true,
+    minLength: [3, 'Username must be at least 3 characters'],
     unique: true
   },
   name: String,
-  passwordHash: String,
+  passwordHash: {
+    type: String,
+    required: true
+  },
   notes: [
     {
       type: mongoose.Schema.Types.ObjectId,
