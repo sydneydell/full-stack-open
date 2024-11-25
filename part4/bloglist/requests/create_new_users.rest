@@ -19,3 +19,13 @@ Content-Type: application/json
     "name": "Australia",
     "password": "friday129"
 }
+
+###
+POST http://localhost:3001/api/users
+Content-Type: application/json
+
+{
+    "username": "authorized2",
+    "name": "Authorized2",
+    "password": "monday23902"
+}

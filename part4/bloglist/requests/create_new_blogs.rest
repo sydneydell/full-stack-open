@@ -34,3 +34,15 @@ Content-Type: application/json
     "url": "https://www.businessinsider.com/guides/kitchen/best-chocolate",
     "userId": "6744b3cee758473c00c05d2f"
 }
+
+###
+POST http://localhost:3001/api/blogs
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InN5ZG5leWRlbGwiLCJpZCI6IjY3NDRiM2JhZTc1ODQ3M2MwMGMwNWQyZCIsImlhdCI6MTczMjU2MzExNH0.BQdMgnK4zlZc3nL_DU6KzWMMLKpp7I9R6EIDBhPuVaI
+
+{
+    "title": "A New Blog Post",
+    "author": "A new person",
+    "url": "https://www.businessinsider.com/guides/kitchen/best-chocolate",
+    "userId": "6744cfee2d27df29304de76d"
+}
