@@ -1,4 +1,4 @@
-const { test, beforeEach, after, describe } = require('node:test')
+const { test, beforeEach, after, describe, beforeAll } = require('node:test')
 const assert = require('node:assert')
 const mongoose = require('mongoose')
 const supertest = require('supertest')
@@ -6,11 +6,24 @@ const app = require('../app')
 const api = supertest(app)
 
 const helper = require('./test_helper')
-
 const Blog = require('../models/blog')
+const User = require('../models/user')
 
 describe('when there is initially some blogs saved', () => {
     beforeEach(async () => {
+        await User.deleteMany({})
+        const user = {
+          username: 'test',
+          name: 'test user',
+          password: 'password'
+        }
+
+        await api
+          .post('/api/users')
+          .send(user)
+          .set('Accept', 'application/json')
+          .expect('Content-Type', /application\/json/)
+
         await Blog.deleteMany({})
         await Blog.insertMany(helper.initialBlogs)
     })
@@ -38,8 +51,21 @@ describe('when there is initially some blogs saved', () => {
 
 describe('viewing a specific blog post', () => {
     beforeEach(async () => {
-      await Blog.deleteMany({})
-      await Blog.insertMany(helper.initialBlogs)
+        await User.deleteMany({})
+        const user = {
+          username: 'test',
+          name: 'test user',
+          password: 'password'
+        }
+
+        await api
+          .post('/api/users')
+          .send(user)
+          .set('Accept', 'application/json')
+          .expect('Content-Type', /application\/json/)
+          
+        await Blog.deleteMany({})
+        await Blog.insertMany(helper.initialBlogs)
     })
 
     test('succeeds with a valid id', async () => {
@@ -74,11 +100,34 @@ describe('viewing a specific blog post', () => {
 
 describe('addition of a new blog post', () => {
     beforeEach(async () => {
+      await User.deleteMany({})
+      const user = {
+        username: 'test',
+        name: 'test user',
+        password: 'password'
+      }
+
+      await api
+        .post('/api/users')
+        .send(user)
+        .set('Accept', 'application/json')
+        .expect('Content-Type', /application\/json/)
+        
       await Blog.deleteMany({})
       await Blog.insertMany(helper.initialBlogs)
     })
 
     test('A valid blog post can be added', async () => {
+        const loginUser = {
+          username: 'test',
+          password: 'password'
+        }
+
+        const loggedUser = await api
+          .post('/api/login')
+          .send(loginUser)
+          .expect('Content-Type', /application\/json/)
+      
         const newBlog = {
           "title": "A new blog",
           "author": "John Smith",
@@ -89,17 +138,28 @@ describe('addition of a new blog post', () => {
         await api
           .post('/api/blogs')
           .send(newBlog)
+          .set('Authorization', `Bearer ${loggedUser.body.token}`)
           .expect(201)
           .expect('Content-Type', /application\/json/)
 
         const blogsAtEnd = await helper.blogsInDb()
         assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length + 1, 'Expected blog to be added')
 
-        const titles = blogsAtEnd.map(n => n.title)
+        const titles = blogsAtEnd.map(b => b.title)
         assert(titles.includes("A new blog"))
     })
 
     test('Likes property defaults to 0 if it is missing', async () => {
+        const loginUser = {
+          username: 'test',
+          password: 'password'
+        }
+
+        const loggedUser = await api
+          .post('/api/login')
+          .send(loginUser)
+          .expect('Content-Type', /application\/json/)
+        
         const newBlog = {
           "title": "A new blog",
           "author": "John Smith",
@@ -109,15 +169,26 @@ describe('addition of a new blog post', () => {
         await api
           .post('/api/blogs')
           .send(newBlog)
+          .set('Authorization', `Bearer ${loggedUser.body.token}`)
           .expect(201)
           .expect('Content-Type', /application\/json/)
 
         const blogsAtEnd = await helper.blogsInDb()
-        const addedBlog = await blogsAtEnd.find(blog => blog.title === "A new blog")
+        const addedBlog = await blogsAtEnd.find(b => b.title === "A new blog")
         assert.strictEqual(addedBlog.likes, 0)
     })
 
     test('Blog without title is not added', async () => {
+        const loginUser = {
+          username: 'test',
+          password: 'password'
+        }
+
+        const loggedUser = await api
+          .post('/api/login')
+          .send(loginUser)
+          .expect('Content-Type', /application\/json/)
+      
         const newBlog1 = {
           "author": "John Smith",
           "url": "https://www.traveler.com/gallery/",
@@ -127,6 +198,7 @@ describe('addition of a new blog post', () => {
         await api
           .post('/api/blogs')
           .send(newBlog1)
+          .set('Authorization', `Bearer ${loggedUser.body.token}`)
           .expect(400)
 
         const blogsAtEnd = await helper.blogsInDb()
@@ -134,6 +206,16 @@ describe('addition of a new blog post', () => {
     })
 
     test('Blog without url is not added', async () => {
+        const loginUser = {
+          username: 'test',
+          password: 'password'
+        }
+
+        const loggedUser = await api
+          .post('/api/login')
+          .send(loginUser)
+          .expect('Content-Type', /application\/json/)
+        
         const newBlog2 = {
           "title": "A new blog",
           "author": "John Smith",
@@ -143,6 +225,7 @@ describe('addition of a new blog post', () => {
         await api
           .post('/api/blogs')
           .send(newBlog2)
+          .set('Authorization', `Bearer ${loggedUser.body.token}`)
           .expect(400)
 
         const blogsAtEnd = await helper.blogsInDb()
@@ -151,9 +234,38 @@ describe('addition of a new blog post', () => {
 })
 
 describe('deletion of a blog post', () => {
+    let token 
+
     beforeEach(async () => {
+      await User.deleteMany({})
+
+      const user = {
+        username: 'test',
+        name: 'test user',
+        password: 'password'
+      }
+
+      const savedUserRepsonse = await api
+        .post('/api/users')
+        .send(user)
+        .expect(201)
+        .expect('Content-Type', /application\/json/)
+
+      const loginResponse = await api
+        .post('/api/login')
+        .send({username: 'test', password: 'password'})
+        .expect(200)
+
+      token = loginResponse.body.token
+
       await Blog.deleteMany({})
-      await Blog.insertMany(helper.initialBlogs)
+
+      const modifiedBlogs = helper.initialBlogs.map(blog => ({
+        ...blog,
+        user: savedUserRepsonse.body.id
+      }))
+
+      await Blog.insertMany(modifiedBlogs)
     })
 
     test('succeeds with a status code 204 if id is valid', async () => {
@@ -162,6 +274,7 @@ describe('deletion of a blog post', () => {
 
       await api
         .delete(`/api/blogs/${blogToDelete.id}`)
+        .set('Authorization', `Bearer ${token}`)
         .expect(204)
 
       const blogsAtEnd = await helper.blogsInDb()
@@ -175,6 +288,19 @@ describe('deletion of a blog post', () => {
 
 describe('update blog post information', () => {
   beforeEach(async () => {
+    await User.deleteMany({})
+    const user = {
+      username: 'test',
+      name: 'test user',
+      password: 'password'
+    }
+
+    await api
+      .post('/api/users')
+      .send(user)
+      .set('Accept', 'application/json')
+      .expect('Content-Type', /application\/json/)
+      
     await Blog.deleteMany({})
     await Blog.insertMany(helper.initialBlogs)
   })

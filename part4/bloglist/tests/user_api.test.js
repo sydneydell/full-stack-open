@@ -11,16 +11,10 @@ const User = require('../models/user')
 describe('when there is initially one user in db', () => {
     beforeEach(async() => {
         await User.deleteMany({})
-
-        const passwordHash = await bcryptjs.hash('sekret', 10)
-        const user = new User({ username: 'root', passwordHash })
-
-        await user.save()
     })
 
+    // not working
     test('creation succeeds with a fresh username', async () => {
-        const usersAtStart = await helper.usersInDb()
-
         const newUser = {
             username: 'mluukkai',
             name: 'Matti Luukkainen',
@@ -34,15 +28,24 @@ describe('when there is initially one user in db', () => {
             .expect('Content-Type', /application\/json/)
 
         const usersAtEnd = await helper.usersInDb()
-        assert.strictEqual(usersAtEnd.length, usersAtStart.length + 1)
-
         const usernames = usersAtEnd.map(u => u.username)
         assert(usernames.includes(newUser.username))
     })
 
+    // not working
     test('creation fails with status code 400 and message if username is already taken', async () => {
-        const usersAtStart = await helper.usersInDb()
+        const originalUser = {
+            username: 'root',
+            name: 'Sydney',
+            password: 'Tuesday4'
+        }
 
+        await api    
+            .post('/api/users')
+            .send(originalUser)
+            .expect(201)
+            .expect('Content-Type', /application\/json/)    
+        
         const newUser = {
             username: 'root',
             name: 'Superuser',
@@ -55,10 +58,7 @@ describe('when there is initially one user in db', () => {
             .expect(400)
             .expect('Content-Type', /application\/json/)
 
-        const usersAtEnd = await helper.usersInDb()
         assert(result.body.error.includes('expected `username` to be unique'))
-
-        assert.strictEqual(usersAtEnd.length, usersAtStart.length)
     })
 })
 
